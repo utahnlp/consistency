@@ -10,7 +10,7 @@ Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framewo
 
 ### 0. Prerequisites
 
-**Hardware**
+**[Hardware]**
 All of our BERT models are based on BERT base version. The batch size, sequence length, and data format are configurated to run smoothly on CUDA device with 8GB memory.
 
 Have the following installed:
@@ -27,20 +27,20 @@ glove.840B.300d.txt (under ./data/)
 	(We don't actually use it, but need it for preprocessing (due to an old design).)
 ```
 
-**SNLI**
+**[SNLI]**
 Besides above, make sure snli_1.0 data is unpacked to ```./data/bert_nli/```, e.g. ```./data/bert_nli/snli_1.0_train.txt```.
 
 
-**MNLI**
+**[MNLI]**
 And have mnli_1.0 data unpacked to ```./data/bert_nli/```. We will use the ```mnli_dev_matched``` for validation, and the ```mnli_dev_mismatched``` for testing. For example, the validation file should be at ```./data/bert_nli/multinli_1.0_dev_matched.txt```
 
-**MSCOCO**
+**[MSCOCO]**
 Unpack mscoco sample data via ```unzip ./data/bert_nli/mscoco.zip```. The zip file contains training split (e.g. ```mscoco.raw.sent1.txt```) with ```400k``` sentence triples and test split (e.g. ```mscoco.test.raw.sent1.txt```) with ```100k``` sentence triples. In practice, our paper sampled ```100k``` (i.e. ```25%```) from the training split and all examples in the test split.
 
 
 ### 1. Preprocessing
 
-**SNLI**
+**[SNLI]**
 Preprocessing of SNLI is separated into the following steps.
 ```
 python3 snli_extract.py --data ./data/bert_nli/snli_1.0_train.txt --output ./data/bert_nli/train
@@ -53,7 +53,7 @@ python3 get_char_idx.py --dict ./data/bert_nli/snli.allword.dict --token_l 16 --
 NOTE, For exact reproducibility, we will use the ```dev_excl_anno.raw.sent*.txt``` for actual SNLI validation. These files are already included in the ```./data/bert_nli/``` directory. The difference is that we reserved ```1000``` examples for preliminary manual analysis and then later excluded them from experiments to avoid contamination.
 
 
-**MNLI**
+**[MNLI]**
 Preprocessing of MNLI dataset:
 ```
 python3 mnli_extract.py --data ./data/bert_nli/multinli_1.0_dev_mismatched.txt --output ./data/bert_nli/mnli.test
@@ -67,7 +67,7 @@ python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 36 --dir .
 	--tokenizer_output mnli --output mnli --max_seq_l 500
 ```
 
-**MSCOCO**
+**[MSCOCO]**
 Preprocessing of mscoco dataset:
 ```
 python3 extra_preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir ./data/bert_nli/ --sent1 mscoco.raw.sent1.txt --sent2 mscoco.raw.sent2.txt --sent3 mscoco.raw.sent3.txt --tokenizer_output mscoco --output mscoco
@@ -76,7 +76,7 @@ python3 extra_preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 -
 
 ### 2. BERT Baseline
 
-**Finetuning once** on both snli and mnli
+**[Finetuning once]** on both snli and mnli
 ```
 mkdir models
 
@@ -94,7 +94,7 @@ done
 ```
 Change ```[GPUID]``` to the desired device id, ```PERC``` specifies percentages of training data to use (1 is 100%). The above script will initiate BERT baselines with three different random seeds (i.e. three runs in a row). Expect to see exactly the same accuracy as we reported in our paper.
 
-**Finetuning twice** on both snli and mnli
+**[Finetuning twice]** on both snli and mnli
 
 ```
 GPUID=[GPUID]
@@ -112,7 +112,7 @@ done
 ```
 This will load the previously finetuned model and continue finetune with lowered learning rate. Expect to see exactly the same accuracy as we reported in our paper.
 
-**Evaluating** on mirror consistency
+**[Evaluation]** on mirror consistency
 ```
 GPUID=[GPUID]
 PERC=1
@@ -126,7 +126,7 @@ done
 done
 ```
 
-**Evaluating** on transitivity consistency
+**[Evaluation]** on transitivity consistency
 ```
 GPUID=[GPUID]
 PERC=1
@@ -161,7 +161,7 @@ done
 ```
 Do change ```PERC``` and ```LAMBD``` accordingly.
 
-**Evaluating** on mirror consistency
+**[Evaluation]** on mirror consistency
 ```
 GPUID=[GPUID]
 LR=0.00001
@@ -180,7 +180,7 @@ done
 python3 confusion_table.py --log both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}
 ```
 
-**Evaluating** on transitivity consistency
+**[Evaluation]** on transitivity consistency
 ```
 GPUID=[GPUID]
 LR=0.00001
