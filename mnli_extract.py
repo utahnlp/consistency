@@ -16,18 +16,6 @@ def tokenize_spacy(text):
 	lemma = [l if l != '' else t for l, t in zip(lemma, toks)]
 	return toks, pos, lemma			
 
-
-def filter_by_pos(keys, toks, pos, lemma):
-	filtered_toks = []
-	filtered_pos = []
-	filtered_lemma = []
-	for t, p, l in zip(toks, pos, lemma):
-		if p not in keys:
-			filtered_toks.append(t)
-			filtered_pos.append(p)
-			filtered_lemma.append(l)
-	return filtered_toks, filtered_pos, filtered_lemma
-
 def write_to(ls, out_file):
 	print('writing to {0}'.format(out_file))
 	with open(out_file, 'w+') as f:
@@ -80,11 +68,6 @@ def extract(opt, csv_file):
 			sent1_toks, sent1_pos, sent1_lemma = tokenize_spacy(sent1)
 			sent2_toks, sent2_pos, sent2_lemma = tokenize_spacy(sent2)
 
-			if opt.filter != '':
-				keys = opt.filter.split(',')
-				sent1_toks, sent1_pos, sent1_lemma = filter_by_pos(keys, sent1_toks, sent1_pos, sent1_lemma)
-				sent2_toks, sent2_pos, sent1_lemma = filter_by_pos(keys, sent2_toks, sent2_pos, sent2_lemma)
-
 			assert(len(sent1_toks) == len(sent1_pos))
 			assert(len(sent2_toks) == len(sent2_pos))
 			assert(len(sent1_toks) == len(sent1_lemma))
@@ -105,8 +88,8 @@ def extract(opt, csv_file):
 
 parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('--data', help="Path to SNLI txt file", default="data/snli_transition/snli_1.0_dev.txt")
-parser.add_argument('--output', help="Prefix to the path of output", default="data/snli_transition/dev")
+parser.add_argument('--data', help="Path to SNLI txt file", default="data/bert_nli/multinli_1.0_dev_mismatched.txt")
+parser.add_argument('--output', help="Prefix to the path of output", default="data/bert_nli/mnli.dev")
 parser.add_argument('--filter', help="List of pos tags to filter out", default="")
 
 
@@ -115,8 +98,8 @@ def main(args):
 	all_sent1, all_sent2, all_sent1_pos, all_sent2_pos, all_sent1_lemma, all_sent2_lemma, all_label = extract(opt, opt.data)
 	print('{0} examples processed.'.format(len(all_sent1)))
 
-	write_to(all_sent1, opt.output + '.sent1.txt')
-	write_to(all_sent2, opt.output + '.sent2.txt')
+	write_to(all_sent1, opt.output + '.raw.sent1.txt')
+	write_to(all_sent2, opt.output + '.raw.sent2.txt')
 	write_to(all_label, opt.output + '.label.txt')
 
 if __name__ == '__main__':

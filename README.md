@@ -9,45 +9,65 @@ Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framewo
 ```
 
 ### 0. Prerequisites
+
+**Hardware**
+All of our BERT models are based on BERT base version. The batch size, sequence length, and data format are configurated to run smoothly on CUDA device with 8GB memory.
+
 Have the following installed:
 ```
 python 3.6+
 pytorch 1.0
 h5py
 numpy
+spacy 2.0.11 (with en model)
 pytorch BERT by huggingface(https://github.com/huggingface/pytorch-pretrained-BERT)
 	(download and put in ../pytorch-pretrained-BERT, not necessarily installed)
 	(However, for exact reproducibility, use the pytorch-pretrained-BERT.zip in this repo)
 glove.840B.300d.txt (under ./data/)
-	(We don't actually use it, but need it for preprocessing.)
+	(We don't actually use it, but need it for preprocessing (due to an old design).)
 ```
 
-Besides above, make sure snli_1.0 data is unpacked to ```./data/bert_nli/```, e.g. ```./data/bert_nli/snli_1.0_dev.txt```.
+**SNLI**
+Besides above, make sure snli_1.0 data is unpacked to ```./data/bert_nli/```, e.g. ```./data/bert_nli/snli_1.0_train.txt```.
 
-And have mnli data unpacked to ```./data/bert_nli/```. We will use the ```mnli_dev_matched``` for validation, and the ```mnli_dev_mismatched``` for testing.
 
-Unpack the ```./data/bert_nli/mscoco.zip``` and move all the files to the ```./data/bert_nli/``` directory, e.g. ```./data/bert_nli/mscoco.raw.sent1.txt```.
+**MNLI**
+And have mnli_1.0 data unpacked to ```./data/bert_nli/```. We will use the ```mnli_dev_matched``` for validation, and the ```mnli_dev_mismatched``` for testing. For example, the validation file should be at ```./data/bert_nli/multinli_1.0_dev_matched.txt```
+
+**MSCOCO**
+Unpack mscoco sample data via ```unzip ./data/bert_nli/mscoco.zip```. The zip file contains training split (e.g. ```mscoco.raw.sent1.txt```) with ```400k``` sentence triples and test split (e.g. ```mscoco.test.raw.sent1.txt```) with ```100k``` sentence triples. In practice, our paper sampled ```100k``` (i.e. ```25%```) from the training split and all examples in the test split.
 
 
 ### 1. Preprocessing
-Preprocessing of snli is separated into the following steps.
+
+**SNLI**
+Preprocessing of SNLI is separated into the following steps.
 ```
+python3 snli_extract.py --data ./data/bert_nli/snli_1.0_train.txt --output ./data/bert_nli/train
+python3 snli_extract.py --data ./data/bert_nli/snli_1.0_test.txt --output ./data/bert_nli/test
+
 python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir ./data/bert_nli/ --output snli
-python3 get_char_idx.py --dict snli.allword.dict --token_l 16 --freq 5 --output char
+python3 get_char_idx.py --dict ./data/bert_nli/snli.allword.dict --token_l 16 --freq 5 --output char
 ```
 
-**NOTE** For exact reproducibility, we will use the ```dev_excl_anno``` for actual snli validation. The difference between this and the official development set is that we reserved ```1000``` examples for manual analysis. These examples are later excluded from experiments to avoid contamination.
+NOTE, For exact reproducibility, we will use the ```dev_excl_anno.raw.sent*.txt``` for actual SNLI validation. These files are already included in the ```./data/bert_nli/``` directory. The difference is that we reserved ```1000``` examples for preliminary manual analysis and then later excluded them from experiments to avoid contamination.
 
-Preprocessing of mnli dataset:
+
+**MNLI**
+Preprocessing of MNLI dataset:
 ```
+python3 mnli_extract.py --data ./data/bert_nli/multinli_1.0_dev_mismatched.txt --output ./data/bert_nli/mnli.test
+python3 mnli_extract.py --data ./data/bert_nli/multinli_1.0_train.txt --output ./data/bert_nli/mnli.train
+python3 mnli_extract.py --data ./data/bert_nli/multinli_1.0_dev_matched.txt --output ./data/bert_nli/mnli.dev
+
 python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 36 --dir ./data/bert_nli/ \
-	--sent1 mnli_train.sent1.txt --sent2 mnli_train.sent2.txt --label mnli_train.label.txt \
-	--sent1_val mnli_dev_matched.sent1.txt --sent2_val mnli_dev_matched.sent2.txt --label_val mnli_dev_matched.label.txt \
-	--sent1_test mnli_dev_mismatched.sent1.txt --sent2_test mnli_dev_mismatched.sent2.txt --label_test mnli_dev_mismatched.label.txt \
+	--sent1 mnli.train.raw.sent1.txt --sent2 mnli.train.raw.sent2.txt --label mnli.train.label.txt \
+	--sent1_val mnli.dev.raw.sent1.txt --sent2_val mnli.dev.raw.sent2.txt --label_val mnli.dev.label.txt \
+	--sent1_test mnli.test.raw.sent1.txt --sent2_test mnli.test.raw.sent2.txt --label_test mnli.test.label.txt \
 	--tokenizer_output mnli --output mnli --max_seq_l 500
 ```
 
-
+**MSCOCO**
 Preprocessing of mscoco dataset:
 ```
 python3 extra_preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir ./data/bert_nli/ --sent1 mscoco.raw.sent1.txt --sent2 mscoco.raw.sent2.txt --sent3 mscoco.raw.sent3.txt --tokenizer_output mscoco --output mscoco
@@ -203,6 +223,8 @@ CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir .
 	--save_file models/both_mscoco_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_${LAMBD_P//.}_perc${PERC//.}_${PERC_U//.}_seed${SEED} | tee models/both_mscoco_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_${LAMBD_P//.}_perc${PERC//.}_${PERC_U//.}_seed${SEED}.txt
 done
 ```
+Here we set ```PERC_U=0.25``` to sample about ```100k``` unlabeled instance pairs(U) for training.
+
 Do change ```PERC```, ```LAMBD```, and ```LAMBD_P``` accordingly.  For evaluation, construct evaluation script accordingly as above.
 
 
@@ -228,8 +250,11 @@ CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir .
 	--load_file models/scratch_mnli_snli_perc${PERC//.}_seed${SEED} \
 	--save_file models/both_mscoco_flip_triple${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_${LAMBD_P//.}_${LAMBD_T//.}_perc${PERC//.}_${PERC_U//.}_seed${SEED} | tee models/both_mscoco_flip_triple${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_${LAMBD_P//.}_${LAMBD_T//.}_perc${PERC//.}_${PERC_U//.}_seed${SEED}.txt
 done
+
+Here we set ```PERC_U=0.25``` to sample about ```100k``` unlabeled instance triples(T) for training.
+
 ```
 Do change ```PERC```, ```LAMBD```, and ```LAMBD_P``` accordingly. For evaluation, construct evaluation script accordingly as above.
 
 ## Issues & To-dos
-- [ ] Sanity check
+- [x] Sanity check
