@@ -20,6 +20,7 @@ pytorch 1.0
 h5py
 numpy
 spacy 2.0.11 (with en model)
+nvidia apex
 pytorch BERT by huggingface(https://github.com/huggingface/pytorch-pretrained-BERT)
 	(download and put in ../pytorch-pretrained-BERT, not necessarily installed)
 	(However, for exact reproducibility, use the pytorch-pretrained-BERT.zip in this repo)
