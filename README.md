@@ -50,7 +50,7 @@ python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir .
 python3 get_char_idx.py --dict ./data/bert_nli/snli.allword.dict --token_l 16 --freq 5 --output char
 ```
 
-NOTE, For exact reproducibility, we will use the ```dev_excl_anno.raw.sent*.txt``` for actual SNLI validation. These files are already included in the ```./data/bert_nli/``` directory. The difference is that we reserved ```1000``` examples for preliminary manual analysis and then later excluded them from experiments to avoid contamination.
+NOTE, For exact reproducibility, we will use the ```dev_excl_anno.raw.sent*.txt``` for actual SNLI validation. These files are already included in the ```./data/bert_nli/``` directory and will be implicitly used in the above scripts. The difference is that we reserved ```1000``` examples for preliminary manual analysis and then later excluded them from experiments to avoid contamination.
 
 
 **[MNLI]**
@@ -76,7 +76,7 @@ python3 extra_preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 -
 
 ### 2. BERT Baseline
 
-**[Finetuning once]** on both snli and mnli
+**[Finetuning once]** on both SNLI and MNLI
 ```
 mkdir models
 
@@ -94,7 +94,7 @@ done
 ```
 Change ```[GPUID]``` to the desired device id, ```PERC``` specifies percentages of training data to use (1 is 100%). The above script will initiate BERT baselines with three different random seeds (i.e. three runs in a row). Expect to see exactly the same accuracy as we reported in our paper.
 
-**[Finetuning twice]** on both snli and mnli
+**[Finetuning twice]** on both SNLI and MNLI
 
 ```
 GPUID=[GPUID]
