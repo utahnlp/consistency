@@ -257,5 +257,9 @@ Here we set ```PERC_U=0.25``` to sample about ```100k``` unlabeled instance trip
 ```
 Do change ```PERC```, ```LAMBD```, and ```LAMBD_P``` accordingly. For evaluation, construct evaluation script accordingly as above.
 
+## Hyperparameters
+
+Please refer to the appendices of our paper for details of hyperparameters. The ``--learning_rate``, ``--lambd``, ``--lambd_p``, and ``--lambd_t`` change over different percentages ``--percent`` and ``--unlabeled_perc``.
+
 ## Issues & To-dos
 - [x] Sanity check
