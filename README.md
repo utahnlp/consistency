@@ -36,7 +36,7 @@ Besides above, make sure snli_1.0 data is unpacked to ```./data/bert_nli/```, e.
 And have mnli_1.0 data unpacked to ```./data/bert_nli/```. We will use the ```mnli_dev_matched``` for validation, and the ```mnli_dev_mismatched``` for testing. For example, the validation file should be at ```./data/bert_nli/multinli_1.0_dev_matched.txt```
 
 **[MSCOCO]**
-Unpack mscoco sample data via ```unzip ./data/bert_nli/mscoco.zip```. The zip file contains training split (e.g. ```mscoco.raw.sent1.txt```) with ```400k``` sentence triples and test split (e.g. ```mscoco.test.raw.sent1.txt```) with ```100k``` sentence triples. In practice, our paper sampled ```100k``` (i.e. ```25%```) from the training split and all examples in the test split.
+Unpack mscoco sample data via ```unzip ./data/bert_nli/mscoco.zip```. The zip file contains training split (e.g. ```mscoco.raw.sent1.txt```) with ```400k``` sentence triples and test split (e.g. ```mscoco.test.raw.sent1.txt```) with ```100k``` sentence triples. In practice, our paper sampled ```100k``` (i.e. ```25%```) from the training split, and used all examples in the test split.
 
 
 ### 1. Preprocessing
