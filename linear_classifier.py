@@ -15,8 +15,8 @@ class LinearClassifier(torch.nn.Module):
 
 		# weights will be initialized later
 		self.linear = nn.Sequential(
-			#nn.Dropout(opt.dropout),	# no dropout here according to huggingface
-			nn.Linear(opt.hidden_size, opt.num_label))	# 1 for start, 1 for end
+			#nn.Dropout(opt.dropout),
+			nn.Linear(opt.hidden_size, opt.num_label))
 
 		self.fp16 = opt.fp16 == 1
 
