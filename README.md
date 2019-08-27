@@ -88,12 +88,14 @@ for SEED in `seq 1 3`; do
 	CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ \
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--learning_rate $LR --epochs 3 --warmup_epoch 3 \
-	--enc bert --cls linear --hidden_size 768 --percent $PERC --dropout 0.1 \
+	--enc bert --cls linear --hidden_size 768 --percent $PERC --dropout 0.0 \
 	--fix_bert 0 --optim adam_fp16 --fp16 1 --seed ${SEED} \
 	--save_file models/scratch_mnli_snli_perc${PERC//.}_seed${SEED} | tee models/scratch_mnli_snli_perc${PERC//.}_seed${SEED}.txt
 done
 ```
 Change ```[GPUID]``` to the desired device id, ```PERC``` specifies percentages of training data to use (1 is 100%). The above script will initiate BERT baselines with three different random seeds (i.e. three runs in a row). Expect to see exactly the same accuracy as we reported in our paper.
+
+We also disabled the dropout in the final linear layer. However, there will be a dropout 0.1 (by default) inside of Bert during training.
 
 **[Finetuning twice]** on both SNLI and MNLI
 
@@ -105,7 +107,7 @@ for SEED in `seq 1 3`; do
 CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ \
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--learning_rate $LR --epochs 3 --warmup_epoch 3 \
-	--enc bert --cls linear --hidden_size 768 --percent $PERC --dropout 0.1 \
+	--enc bert --cls linear --hidden_size 768 --percent $PERC --dropout 0.0 \
 	--fix_bert 0 --optim adam_fp16 --fp16 1 --seed ${SEED} \
 	--load_file models/scratch_mnli_snli_perc${PERC//.}_seed${SEED} \
 	--save_file models/twice_scratch_mnli_snli_perc${PERC//.}_seed${SEED} | tee models/twice_scratch_mnli_snli_perc${PERC//.}_seed${SEED}.txt
@@ -154,7 +156,7 @@ for SEED in `seq 1 3`; do
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--learning_rate $LR --epochs 3 --warmup_epoch 3 \
 	--loss transition --fwd_mode flip --lambd ${LAMBD} \
-	--enc bert --cls linear --hidden_size 768 --percent $PERC --dropout 0.1 --constr ${CONSTR} \
+	--enc bert --cls linear --hidden_size 768 --percent $PERC --dropout 0.0 --constr ${CONSTR} \
 	--fix_bert 0 --optim adam_fp16 --fp16 1 --seed ${SEED} \
 	--load_file models/scratch_mnli_snli_perc${PERC//.}_seed${SEED} \
 	--save_file models/both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}_seed${SEED} | tee models/both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}_seed${SEED}.txt
@@ -217,7 +219,7 @@ CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir .
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--unlabeled_data mscoco.hdf5 --unlabeled_triple_mode 0 \
 	--loss transition --fwd_mode flip_and_unlabeled --lambd ${LAMBD} \
-	--learning_rate $LR --epochs 3 --warmup_epoch 3 --dropout 0.1 --constr ${CONSTR} \
+	--learning_rate $LR --epochs 3 --warmup_epoch 3 --dropout 0.0 --constr ${CONSTR} \
 	--enc bert --cls linear --hidden_size 768 --percent $PERC --unlabeled_perc ${PERC_U} --lambd_p $LAMBD_P \
 	--fix_bert 0 --optim adam_fp16 --fp16 1 --seed ${SEED} \
 	--load_file models/scratch_mnli_snli_perc${PERC//.}_seed${SEED} \
@@ -245,7 +247,7 @@ CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir .
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--unlabeled_data mscoco.hdf5 --unlabeled_triple_mode 1 \
 	--loss transition --fwd_mode flip_and_triple --fix_bert 0 --optim adam_fp16 --fp16 1 --weight_decay 1 \
-	--learning_rate $LR --epochs 3 --warmup_epoch 3 --dropout 0.1 --constr ${CONSTR} \
+	--learning_rate $LR --epochs 3 --warmup_epoch 3 --dropout 0.0 --constr ${CONSTR} \
 	--enc bert --cls linear --hidden_size 768 --percent $PERC --unlabeled_perc ${PERC_U} --lambd ${LAMBD} --lambd_p $LAMBD_P --lambd_t $LAMBD_T \
 	--seed ${SEED} \
 	--load_file models/scratch_mnli_snli_perc${PERC//.}_seed${SEED} \
