@@ -115,6 +115,19 @@ done
 ```
 This will load the previously finetuned model and continue finetune with lowered learning rate. Expect to see exactly the same accuracy as we reported in our paper.
 
+
+**[Evaluation]** on SNLI test set
+```
+GPUID=[GPUID]
+PERC=1
+DROP=0.1
+CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir data/bert_bias/ --data snli.test.hdf5 \
+--enc bert --cls linear --hidden_size 768 --fp16 1 --dropout 0.0 
+--load_file models/baseline_drop${DROP//.}_perc${PERC//.} | tee models/baseline_drop${DROP//.}_perc${PERC//.}.evallog.txt
+```
+For MNLI, use ```--data mnli.test.hdf5```.
+
+
 **[Evaluation]** on mirror consistency
 ```
 GPUID=[GPUID]
