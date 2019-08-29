@@ -47,7 +47,7 @@ Preprocessing of SNLI is separated into the following steps.
 python3 snli_extract.py --data ./data/bert_nli/snli_1.0_train.txt --output ./data/bert_nli/train
 python3 snli_extract.py --data ./data/bert_nli/snli_1.0_test.txt --output ./data/bert_nli/test
 
-python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir ./data/bert_nli/ --output snli
+python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir ./data/bert_nli/ --output snli --tokenizer_output snli
 python3 get_char_idx.py --dict ./data/bert_nli/snli.allword.dict --token_l 16 --freq 5 --output char
 ```
 

@@ -479,7 +479,7 @@ def process(opt):
 	tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
 	#### tokenize
-	tokenizer_output = opt.tokenizer_output+'.' if opt.tokenizer_output != opt.dir else ''
+	tokenizer_output = opt.tokenizer_output+'.' if opt.tokenizer_output != opt.dir else opt.dir
 	sent1 = tokenize_and_write(tokenizer, opt.sent1, tokenizer_output + 'train.sent1.txt')
 	sent2 = tokenize_and_write(tokenizer, opt.sent2, tokenizer_output + 'train.sent2.txt')
 	label = load(opt.label)
