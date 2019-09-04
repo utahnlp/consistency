@@ -1,4 +1,4 @@
-Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framework for Consistency of Neural Models]
+Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framework for Consistency of Neural Models](https://arxiv.org/abs/1909.00126)
 ```
 @inproceedings{li2019consistency,
       author    = {Li, Tao and Gupta, Vivek and Mehta, Maitrey and Srikumar, Vivek},
