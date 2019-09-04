@@ -3,7 +3,7 @@ Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framewo
 @inproceedings{li2019consistency,
       author    = {Li, Tao and Gupta, Vivek and Mehta, Maitrey and Srikumar, Vivek},
       title     = {A Logic-Driven Framework for Consistency of Neural Models},
-      booktitle = {2019 Conference on Empirical Methods in Natural Language Processing },
+      booktitle = {Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing},
       year      = {2019}
   }
 ```
