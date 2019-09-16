@@ -122,7 +122,7 @@ GPUID=[GPUID]
 PERC=1
 SEED=[SEED]
 CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir data/bert_nli/ --data snli.test.hdf5 \
---enc bert --cls linear --hidden_size 768 --fp16 1 --dropout 0.0 
+--enc bert --cls linear --hidden_size 768 --fp16 1 --dropout 0.0 \
 --load_file models/scratch_mnli_snli_perc${PERC//.}_seed${SEED} | tee models/scratch_mnli_snli_perc${PERC//.}_seed${SEED}.evallog.txt
 ```
 For MNLI, use ```--data mnli.test.hdf5```.
