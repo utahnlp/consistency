@@ -121,7 +121,7 @@ This will load the previously finetuned model and continue finetune with lowered
 GPUID=[GPUID]
 PERC=1
 DROP=0.1
-CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir data/bert_bias/ --data snli.test.hdf5 \
+CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir data/bert_nli/ --data snli.test.hdf5 \
 --enc bert --cls linear --hidden_size 768 --fp16 1 --dropout 0.0 
 --load_file models/baseline_drop${DROP//.}_perc${PERC//.} | tee models/baseline_drop${DROP//.}_perc${PERC//.}.evallog.txt
 ```
