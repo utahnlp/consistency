@@ -10,6 +10,12 @@ Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framewo
   }
 ```
 
+---
+## Headsup
+To accommodate recent updates in pytorch/huggingface/apex, try the branch ```huggingface_hub```.
+
+---
+
 ### 0. Prerequisites
 
 **[Hardware]**
@@ -18,6 +24,7 @@ All of our BERT models are based on BERT base version. The batch size, sequence 
 Have the following installed:
 ```
 python 3.6+
+NVCC compiler 10.0
 pytorch 1.0
 h5py
 numpy
