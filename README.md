@@ -1,4 +1,4 @@
-<p align="center"><img width="20%" src="logo.png" /></p>
+<p align="center"><img width="60%" src="logo.png" /></p>
 
 ---
 ### What is special in this branch?
