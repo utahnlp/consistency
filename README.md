@@ -1,3 +1,11 @@
+---
+### What is special in this branch?
+This branch accommodates recent updates in huggingface's pytorch transformer hub and nvidia apex.
+The ```master``` branch is customized for bert-base while this branch works with other typical bertology models in the huggingface hub.
+To use that, start from the prerequisites steps.
+
+---
+
 Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framework for Consistency of Neural Models](https://arxiv.org/abs/1909.00126)
 ```
 @inproceedings{li2019consistency,
@@ -16,17 +24,18 @@ All of our BERT models are based on BERT base version. The batch size, sequence 
 Have the following installed:
 ```
 python 3.6+
-pytorch 1.0
+NVCC compiler 10.0
+pytorch 1.2.0
 h5py
 numpy
 spacy 2.0.11 (with en model)
 nvidia apex
-pytorch BERT by huggingface(https://github.com/huggingface/pytorch-pretrained-BERT)
-	(download and put in ../pytorch-pretrained-BERT, not necessarily installed)
-	(However, for exact reproducibility, use the pytorch-pretrained-BERT.zip in this repo)
+pytorch BERT by huggingface(https://github.com/huggingface/pytorch-transformers.git)
+	(download and put in ../pytorch-transformers, not necessarily installed)
 glove.840B.300d.txt (under ./data/)
 	(We don't actually use it, but need it for preprocessing (due to an old design).)
 ```
+NOTE, the pytorch and apex need to use the same version of nvcc for correct installation.
 
 **[SNLI]**
 Besides above, make sure snli_1.0 data is unpacked to ```./data/bert_nli/```, e.g. ```./data/bert_nli/snli_1.0_train.txt```.
@@ -47,7 +56,7 @@ Preprocessing of SNLI is separated into the following steps.
 python3 snli_extract.py --data ./data/bert_nli/snli_1.0_train.txt --output ./data/bert_nli/train
 python3 snli_extract.py --data ./data/bert_nli/snli_1.0_test.txt --output ./data/bert_nli/test
 
-python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir ./data/bert_nli/ --output snli --tokenizer_output snli
+python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 40 --max_seq_l 450 --bert_type roberta-base --dir ./data/bert_nli/ --output snli --tokenizer_output snli
 python3 get_char_idx.py --dict ./data/bert_nli/snli.allword.dict --token_l 16 --freq 5 --output char
 ```
 
@@ -61,7 +70,7 @@ python3 mnli_extract.py --data ./data/bert_nli/multinli_1.0_dev_mismatched.txt -
 python3 mnli_extract.py --data ./data/bert_nli/multinli_1.0_train.txt --output ./data/bert_nli/mnli.train
 python3 mnli_extract.py --data ./data/bert_nli/multinli_1.0_dev_matched.txt --output ./data/bert_nli/mnli.dev
 
-python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 36 --dir ./data/bert_nli/ \
+python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 30 --bert_type roberta-base --dir ./data/bert_nli/ \
 	--sent1 mnli.train.raw.sent1.txt --sent2 mnli.train.raw.sent2.txt --label mnli.train.label.txt \
 	--sent1_val mnli.dev.raw.sent1.txt --sent2_val mnli.dev.raw.sent2.txt --label_val mnli.dev.label.txt \
 	--sent1_test mnli.test.raw.sent1.txt --sent2_test mnli.test.raw.sent2.txt --label_test mnli.test.label.txt \
@@ -71,8 +80,8 @@ python3 preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 36 --dir .
 **[MSCOCO]**
 Preprocessing of mscoco dataset:
 ```
-python3 extra_preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir ./data/bert_nli/ --sent1 mscoco.raw.sent1.txt --sent2 mscoco.raw.sent2.txt --sent3 mscoco.raw.sent3.txt --tokenizer_output mscoco --output mscoco
-python3 extra_preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --dir ./data/bert_nli/ --sent1 mscoco.test.raw.sent1.txt --sent2 mscoco.test.raw.sent2.txt --sent3 mscoco.test.raw.sent3.txt --tokenizer_output mscoco.test --output mscoco.test
+python3 extra_preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 40 --bert_type roberta-base --dir ./data/bert_nli/ --sent1 mscoco.raw.sent1.txt --sent2 mscoco.raw.sent2.txt --sent3 mscoco.raw.sent3.txt --tokenizer_output mscoco --output mscoco
+python3 extra_preprocess.py --glove ./data/glove.840B.300d.txt --batch_size 48 --bert_type roberta-base --dir ./data/bert_nli/ --sent1 mscoco.test.raw.sent1.txt --sent2 mscoco.test.raw.sent2.txt --sent3 mscoco.test.raw.sent3.txt --tokenizer_output mscoco.test --output mscoco.test
 ```
 
 ### 2. BERT Baseline
@@ -85,7 +94,7 @@ GPUID=[GPUID]
 LR=0.00003
 PERC=1
 for SEED in `seq 1 3`; do
-	CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ \
+	CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir ./data/bert_nli/ \
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--learning_rate $LR --epochs 3 --warmup_epoch 3 \
 	--enc bert --cls linear --hidden_size 768 --percent $PERC --dropout 0.0 \
@@ -104,7 +113,7 @@ GPUID=[GPUID]
 LR=0.00001
 PERC=1
 for SEED in `seq 1 3`; do
-CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ \
+CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir ./data/bert_nli/ \
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--learning_rate $LR --epochs 3 --warmup_epoch 3 \
 	--enc bert --cls linear --hidden_size 768 --percent $PERC --dropout 0.0 \
@@ -121,7 +130,7 @@ This will load the previously finetuned model and continue finetune with lowered
 GPUID=[GPUID]
 PERC=1
 SEED=[SEED]
-CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir data/bert_nli/ --data snli.test.hdf5 \
+CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir data/bert_nli/ --data snli.test.hdf5 \
 --enc bert --cls linear --hidden_size 768 --fp16 1 --dropout 0.0 \
 --load_file models/scratch_mnli_snli_perc${PERC//.}_seed${SEED} | tee models/scratch_mnli_snli_perc${PERC//.}_seed${SEED}.evallog.txt
 ```
@@ -134,7 +143,7 @@ GPUID=[GPUID]
 PERC=1
 for SWAP_SENT in 0 1; do
 for SEED in `seq 1 3`; do
-CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir data/bert_nli/ --data mscoco.test.hdf5 \
+CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir data/bert_nli/ --data mscoco.test.hdf5 \
 	--enc bert --cls linear --hidden_size 768 --fp16 1 --dropout 0.0 --swap_sent $SWAP_SENT \
 	--pred_output models/twice_scratch_mnli_snli_perc${PERC//.}_seed${SEED}_swap${SWAP_SENT} \
 	--load_file models/twice_scratch_mnli_snli_perc${PERC//.}_seed${SEED} | tee models/twice_scratch_mnli_snli_perc${PERC//.}_seed${SEED}.evallog.txt
@@ -148,7 +157,7 @@ GPUID=[GPUID]
 PERC=1
 for PAIR in alpha beta gamma; do
 for SEED in `seq 1 3`; do
-CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir data/bert_nli/ --data mscoco.test.hdf5 \
+CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir data/bert_nli/ --data mscoco.test.hdf5 \
 	--enc bert --cls linear --hidden_size 768 --fp16 1 --dropout 0.0 --data_triple_mode 1 --sent_pair $PAIR --swap_sent 0 \
 	--pred_output models/twice_scratch_mnli_snli_perc${PERC//.}_seed${SEED}_${PAIR} \
 	--load_file models/twice_scratch_mnli_snli_perc${PERC//.}_seed${SEED} | tee models/twice_scratch_mnli_snli_perc${PERC//.}_seed${SEED}.evallog.txt
@@ -165,7 +174,7 @@ CONSTR=6
 PERC=1
 LAMBD=1
 for SEED in `seq 1 3`; do
-	CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ \
+	CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir ./data/bert_nli/ \
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--learning_rate $LR --epochs 3 --warmup_epoch 3 \
 	--loss transition --fwd_mode flip --lambd ${LAMBD} \
@@ -186,7 +195,7 @@ PERC=0.2
 LAMBD=1
 for SWAP_SENT in 0 1; do
 for SEED in `seq 1 3`; do
-	CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ --data mscoco.test.hdf5 \
+	CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir ./data/bert_nli/ --data mscoco.test.hdf5 \
 	--enc bert --cls linear --dropout 0.0 --hidden_size 768 --fp16 1 --data_triple_mode 0 --swap_sent $SWAP_SENT \
 	--pred_output models/both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}_seed${SEED}_swap${SWAP_SENT} \
 	--load_file models/both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}_seed${SEED} | tee models/both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}_seed${SEED}.triplelog.txt
@@ -205,7 +214,7 @@ PERC=0.2
 LAMBD=1
 for PAIR in alpha beta gamma; do
 for SEED in `seq 1 3`; do
-	CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ --data mscoco.test.hdf5 \
+	CUDA_VISIBLE_DEVICES=$GPUID python3 -u eval.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir ./data/bert_nli/ --data mscoco.test.hdf5 \
 	--enc bert --cls linear --dropout 0.0 --hidden_size 768 --fp16 1 --data_triple_mode 1 --sent_pair $PAIR \
 	--pred_output models/both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}_seed${SEED}_${PAIR} \
 	--load_file models/both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}_seed${SEED} | tee models/both_flip${CONSTR//,}_lr${LR//.}_lambd${LAMBD//.}_perc${PERC//.}_seed${SEED}.triplelog.txt
@@ -228,7 +237,7 @@ LR=0.000005
 LAMBD=1
 LAMBD_P=0.001
 for SEED in `seq 1 3`; do
-CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ \
+CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir ./data/bert_nli/ \
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--unlabeled_data mscoco.hdf5 --unlabeled_triple_mode 0 \
 	--loss transition --fwd_mode flip_and_unlabeled --lambd ${LAMBD} \
@@ -256,7 +265,7 @@ LAMBD=1
 LAMBD_P=0.00001
 LAMBD_T=0.000001
 for SEED in `seq 3 3`; do
-CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --dir ./data/bert_nli/ \
+CUDA_VISIBLE_DEVICES=$GPUID python3 -u train.py --gpuid 0 --bert_gpuid 0 --bert_type roberta-base --dir ./data/bert_nli/ \
 	--train_data mnli.train.hdf5 --val_data mnli.val.hdf5 --extra_train_data snli.train.hdf5 --extra_val_data snli.val.hdf5 \
 	--unlabeled_data mscoco.hdf5 --unlabeled_triple_mode 1 \
 	--loss transition --fwd_mode flip_and_triple --fix_bert 0 --optim adam_fp16 --fp16 1 --weight_decay 1 \
@@ -278,3 +287,4 @@ Please refer to the appendices of our paper for details of hyperparameters. The 
 
 ## Issues & To-dos
 - [x] Sanity check
+- [ ] Cleanup code on glove and char embeddings

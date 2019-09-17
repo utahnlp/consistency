@@ -37,6 +37,7 @@ parser.add_argument('--load_file', help="The path to pretrained model (optional)
 parser.add_argument('--train_res', help="Path to training resource files, seperated by comma.", default="")
 parser.add_argument('--val_res', help="Path to validation resource files, seperated by comma.", default="")
 ## pipeline specs
+parser.add_argument('--bert_type', help="The type of bert encoder from huggingface, eg. roberta-base",default = "roberta-base")
 parser.add_argument('--use_word_vec', help="Whether to use word vec", type=int, default=0)
 parser.add_argument('--use_char_emb', help="Whether to use character embedding", type=int, default=0)
 parser.add_argument('--word_vec_size', help="The input word embedding dim", type=int, default=300)
@@ -326,14 +327,11 @@ def train_epoch(opt, shared, m, optim, data, epoch_id, sub_idx, extra=None, extr
 		acc_batch_size += batch_l
 
 		# accumulate grads
-		if opt.optim == 'adam_fp16' or opt.optim == 'adam_fp16_shared':
-			optim.backward(m, batch_loss)
-		else:
-			batch_loss.backward()
+		grad_norm2 = optim.backward(m, batch_loss)
 
 		# accumulate current batch until the rolled up batch size exceeds threshold or meet certain boundary
 		if i == data_size-1 or acc_batch_size >= opt.acc_batch_size or (i+1) % opt.print_every == 0:
-			grad_norm2 = optim.step(m)
+			optim.step(m)
 			shared.num_update += 1
 
 			# clear up grad
@@ -544,6 +542,7 @@ def main(args):
 	
 	if opt.gpuid != -1:
 		m.distribute()	# distribute to multigpu
+	m = optim.build_optimizer(m)	# build optimizer after distributing model to devices
 
 	# loading data
 	train_res_files = None if opt.train_res == '' else opt.train_res.split(',')

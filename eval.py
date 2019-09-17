@@ -27,6 +27,7 @@ parser.add_argument('--load_file', help="Path to where model to be loaded.", def
 # resource specs
 parser.add_argument('--res', help="Path to validation resource files, seperated by comma.", default="")
 ## pipeline specs
+parser.add_argument('--bert_type', help="The type of bert encoder from huggingface, eg. roberta-base",default = "roberta-base")
 parser.add_argument('--gpuid', help="The GPU index, if -1 then use CPU", type=int, default=-1)
 parser.add_argument('--use_word_vec', help="Whether to use word vec", type=int, default=0)
 parser.add_argument('--use_char_emb', help="Whether to use character embedding", type=int, default=0)

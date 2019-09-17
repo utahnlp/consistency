@@ -123,8 +123,9 @@ class Pipeline(torch.nn.Module):
 		modules.append(self.classifier)
 
 		for m in modules:
-			if hasattr(m, 'fp16') and  m.fp16:
-				m.half()
+			# This is no longer needed
+			#if hasattr(m, 'fp16') and  m.fp16:
+			#	m.half()
 
 			if hasattr(m, 'customize_cuda_id'):
 				print('pushing module to customized cuda id: {0}'.format(m.customize_cuda_id))

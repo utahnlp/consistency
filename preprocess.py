@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '../pytorch-pretrained-BERT')
+sys.path.insert(0, '../pytorch-transformers')
 import os
 import argparse
 import numpy as np
@@ -9,8 +9,16 @@ from collections import defaultdict
 import json
 import torch
 from torch import cuda
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
+from pytorch_transformers import *
 
+def get_tokenizer(key):
+	model_map={"bert-base-uncased": (BertModel, BertTokenizer),
+		"gpt2": (GPT2Model, GPT2Tokenizer),
+		"roberta-base": (RobertaModel, RobertaTokenizer)}
+	model_cls, tokenizer_cls = model_map[key]
+	print('loading tokenizer: {0}'.format(key))
+	tokenizer = tokenizer_cls.from_pretrained(key)
+	return tokenizer
 
 class Indexer:
 	def __init__(self, symbols = ["<blank>"], num_oov=100):
@@ -131,17 +139,15 @@ def make_vocab_triple(opt, glove_vocab, word_indexer, all_word_indexer, label_in
 def convert(opt, tokenizer, word_indexer, all_word_indexer, label_indexer, sent1, sent2, label, output, num_ex):
 	np.random.seed(opt.seed)
 
-	bert_tok_idx1 = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	bert_tok_idx2 = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	# better generate seg and mask on the fly
-	#bert_seg_idx1 = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	#bert_mask = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-		
 	max_seq_l = opt.max_seq_l + 1 #add 1 for BOS
+
+	bert_tok_idx1 = np.zeros((num_ex, max_seq_l), dtype=int)
+	bert_tok_idx2 = np.zeros((num_ex, max_seq_l), dtype=int)
+	# better generate seg and mask on the fly
 	targets = np.zeros((num_ex, max_seq_l), dtype=int)
 	sources = np.zeros((num_ex, max_seq_l), dtype=int)
-	all_sources = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	all_targets = np.zeros((num_ex, opt.max_seq_l), dtype=int)
+	all_sources = np.zeros((num_ex, max_seq_l), dtype=int)
+	all_targets = np.zeros((num_ex, max_seq_l), dtype=int)
 	labels = np.zeros((num_ex,), dtype =int)
 	source_lengths = np.zeros((num_ex,), dtype=int)
 	target_lengths = np.zeros((num_ex,), dtype=int)
@@ -160,10 +166,10 @@ def convert(opt, tokenizer, word_indexer, all_word_indexer, label_indexer, sent1
 		targ = pad(targ_orig, max_seq_l, '<blank>')
 		targ = word_indexer.convert_sequence(targ)
 
-		all_src = pad(src_orig, opt.max_seq_l, '<blank>')
+		all_src = pad(src_orig, max_seq_l, '<blank>')
 		all_src = all_word_indexer.convert_sequence(all_src)
 
-		all_targ = pad(targ_orig, opt.max_seq_l, '<blank>')
+		all_targ = pad(targ_orig, max_seq_l, '<blank>')
 		all_targ = all_word_indexer.convert_sequence(all_targ)
 
 		bert_tok_idx1[ex_id, :len(src_orig)] = np.asarray(tokenizer.convert_tokens_to_ids(src_orig))
@@ -264,171 +270,8 @@ def convert(opt, tokenizer, word_indexer, all_word_indexer, label_indexer, sent1
 	f.close()  
 
 
-def convert_triple(opt, tokenizer, word_indexer, all_word_indexer, label_indexer, sent1, sent2, sent3, label, output, num_ex):
-	np.random.seed(opt.seed)
-
-	bert_tok_idx1 = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	bert_tok_idx2 = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	bert_tok_idx3 = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-		
-	max_seq_l = opt.max_seq_l + 1 #add 1 for BOS
-	targets = np.zeros((num_ex, max_seq_l), dtype=int)
-	sources = np.zeros((num_ex, max_seq_l), dtype=int)
-	thirds = np.zeros((num_ex, max_seq_l), dtype=int)
-	all_sources = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	all_targets = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	all_thirds = np.zeros((num_ex, opt.max_seq_l), dtype=int)
-	labels = np.zeros((num_ex,), dtype =int)
-	source_lengths = np.zeros((num_ex,), dtype=int)
-	target_lengths = np.zeros((num_ex,), dtype=int)
-	third_lengths = np.zeros((num_ex,), dtype=int)
-	ex_idx = np.zeros(num_ex, dtype=int)
-	batch_keys = np.array([None for _ in range(num_ex)])
-	
-	ex_id = 0
-	for _, (src_orig, targ_orig, third_orig, label_orig) in enumerate(zip(sent1, sent2. sent3, label)):
-		targ_orig =  targ_orig.strip().split()
-		src_orig =  src_orig.strip().split()
-		third_orig =  third_orig.strip().split()
-		label = label_orig.strip()
-
-		src = pad(src_orig, max_seq_l, '<blank>')
-		src = word_indexer.convert_sequence(src)
-		   
-		targ = pad(targ_orig, max_seq_l, '<blank>')
-		targ = word_indexer.convert_sequence(targ)
-
-		third = pad(third_orig, max_seq_l, '<blank>')
-		third = word_indexer.convert_sequence(third)
-
-		all_src = pad(src_orig, opt.max_seq_l, '<blank>')
-		all_src = all_word_indexer.convert_sequence(all_src)
-
-		all_targ = pad(targ_orig, opt.max_seq_l, '<blank>')
-		all_targ = all_word_indexer.convert_sequence(all_targ)
-
-		all_third = pad(third_orig, opt.max_seq_l, '<blank>')
-		all_third = all_word_indexer.convert_sequence(all_third)
-
-		bert_tok_idx1[ex_id, :len(src_orig)] = np.asarray(tokenizer.convert_tokens_to_ids(src_orig))
-		bert_tok_idx2[ex_id, :len(targ_orig)] = np.asarray(tokenizer.convert_tokens_to_ids(targ_orig))
-		bert_tok_idx3[ex_id, :len(third_orig)] = np.asarray(tokenizer.convert_tokens_to_ids(third_orig))
-		
-		sources[ex_id] = np.array(src, dtype=int)
-		targets[ex_id] = np.array(targ,dtype=int)
-		thirds[ex_id] = np.array(third, dtype=int)
-		all_sources[ex_id] = np.array(all_src, dtype=int)
-		all_targets[ex_id] = np.array(all_targ, dtype=int)
-		all_thirds[ex_id] = np.array(all_third, dtype=int)
-		source_lengths[ex_id] = (sources[ex_id] != 0).sum() 
-		target_lengths[ex_id] = (targets[ex_id] != 0).sum()
-		third_lengths[ex_id] = (thirds[ex_id] != 0).sum()
-		labels[ex_id] = label_indexer.d[label]
-		batch_keys[ex_id] = (source_lengths[ex_id], target_lengths[ex_id], third_lengths[ex_id])
-		ex_id += 1
-		if ex_id % 100000 == 0:
-			print("{}/{} sentences processed".format(ex_id, num_ex))
-	
-	print(ex_id, num_ex)
-	if opt.shuffle == 1:
-		rand_idx = np.random.permutation(ex_id)
-		targets = targets[rand_idx]
-		sources = sources[rand_idx]
-		thirds = thirds[rand_idx]
-		all_sources = all_sources[rand_idx]
-		all_targets = all_targets[rand_idx]
-		all_thirds = all_thirds[rand_idx]
-		source_lengths = source_lengths[rand_idx]
-		target_lengths = target_lengths[rand_idx]
-		third_lengths = third_lengths[rand_idx]
-		labels = labels[rand_idx]
-		batch_keys = batch_keys[rand_idx]
-		ex_idx = rand_idx
-		bert_tok_idx1 = bert_tok_idx1[rand_idx]
-		bert_tok_idx2 = bert_tok_idx2[rand_idx]
-		bert_tok_idx3 = bert_tok_idx3[rand_idx]
-	
-	# break up batches based on source/target lengths
-	sorted_keys = sorted([(i, p) for i, p in enumerate(batch_keys)], key=lambda x: x[1])
-	sorted_idx = [i for i, _ in sorted_keys]
-	# rearrange examples	
-	sources = sources[sorted_idx]
-	targets = targets[sorted_idx]
-	thirds = thirds[sorted_idx]
-	all_sources = all_sources[sorted_idx]
-	all_targets = all_targets[sorted_idx]
-	all_thirds = all_thirds[sorted_idx]
-	labels = labels[sorted_idx]
-	target_l = target_lengths[sorted_idx]
-	source_l = source_lengths[sorted_idx]
-	third_l = third_lengths[sorted_idx]
-	ex_idx = rand_idx[sorted_idx]
-	bert_tok_idx1 = bert_tok_idx1[sorted_idx]
-	bert_tok_idx2 = bert_tok_idx2[sorted_idx]
-	bert_tok_idx3 = bert_tok_idx3[sorted_idx]
-	
-	curr_l_src = 0
-	curr_l_targ = 0
-	curr_l_third = 0
-	batch_location = [] #idx where sent length changes
-	for j,i in enumerate(sorted_idx):
-		if batch_keys[i][0] != curr_l_src or batch_keys[i][1] != curr_l_targ or batch_keys[i][2] != curr_l_third:
-			curr_l_src = source_lengths[i]
-			curr_l_targ = target_lengths[i]
-			curr_l_third = third_lengths[i]
-			batch_location.append(j)
-	if batch_location[-1] != len(sources): 
-		batch_location.append(len(sources)-1)
-	
-	#get batch sizes
-	curr_idx = 0
-	batch_idx = [0]
-	for i in range(len(batch_location)-1):
-		end_location = batch_location[i+1]
-		while curr_idx < end_location:
-			curr_idx = min(curr_idx + opt.batch_size, end_location)
-			batch_idx.append(curr_idx)
-
-	batch_l = []
-	target_l_new = []
-	source_l_new = []
-	third_l_new = []
-	for i in range(len(batch_idx)):
-		end = batch_idx[i+1] if i < len(batch_idx)-1 else len(sources)
-		batch_l.append(end - batch_idx[i])
-		source_l_new.append(source_l[batch_idx[i]])
-		target_l_new.append(target_l[batch_idx[i]])
-		third_l_new.append(third_l[batch_idx[i]])
-		
-		# sanity check
-		for k in range(batch_idx[i], end):
-			assert(source_l[k] == source_l_new[-1])
-			assert(sources[k, source_l[k]:].sum() == 0)
-
-	
-	# Write output
-	f = h5py.File(output, "w")		
-	f["source"] = sources
-	f["target"] = targets
-	f['third'] = thirds
-	f["label"] = labels
-	f['all_source'] = all_sources
-	f['all_target'] = all_targets
-	f['all_third'] = all_thirds
-	f["target_l"] = np.array(target_l_new, dtype=int)
-	f["source_l"] = np.array(source_l_new, dtype=int)
-	f["third_l"] = np.array(third_l_new, dtype=int)
-	f["batch_l"] = batch_l
-	f["batch_idx"] = batch_idx
-	f['ex_idx'] = ex_idx
-	f['bert_tok_idx1'] = bert_tok_idx1
-	f['bert_tok_idx2'] = bert_tok_idx2
-	f['bert_tok_idx3'] = bert_tok_idx3
-	print("saved {} batches ".format(len(f["batch_l"])))
-	f.close() 
-
-
 def tokenize_and_write(tokenizer, path, output):
+	CLS, SEP = tokenizer.cls_token, tokenizer.sep_token
 	print('tokenizing sentences from {0}'.format(path))
 	all_tokenized = []
 	with open(path, 'r') as f:
@@ -437,7 +280,7 @@ def tokenize_and_write(tokenizer, path, output):
 				continue
 			
 			toks = tokenizer.tokenize(l)
-			toks = ['[CLS]'] + toks + ['[SEP]']
+			toks = [CLS] + toks + [SEP]
 			all_tokenized.append(' '.join(toks))
 
 	print('writing tokenized to {0}'.format(output))
@@ -458,12 +301,10 @@ def load(path):
 
 
 def process(opt):
-	do_triple = opt.triple1 != opt.dir
-	if do_triple:
-		print('triple detected, will process in triple mode.')
+	tokenizer = get_tokenizer(opt.bert_type)
 
-	all_word_indexer = Indexer(symbols = ["<blank>", "[CLS]", "[SEP]"])	# all tokens will be recorded
-	word_indexer = Indexer(symbols = ["<blank>", "[CLS]", "[SEP]"])		# only glove tokens will be recorded
+	all_word_indexer = Indexer(symbols = ["<blank>", tokenizer.cls_token, tokenizer.sep_token])	# all tokens will be recorded
+	word_indexer = Indexer(symbols = ["<blank>", tokenizer.cls_token, tokenizer.sep_token])		# only glove tokens will be recorded
 	glove_vocab = get_glove_words(opt.glove)
 	label_indexer = Indexer(symbols=["entailment", "neutral", "contradiction"], num_oov=0)
 
@@ -473,10 +314,6 @@ def process(opt):
 		oov_words.append('<oov'+ str(i) + '>')
 	word_indexer.register_all_words(oov_words, count=False)
 	all_word_indexer.register_all_words(oov_words, count=False)
-
-
-	print('loading BERT tokenizer...')
-	tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
 	#### tokenize
 	tokenizer_output = opt.tokenizer_output+'.' if opt.tokenizer_output != opt.dir else opt.dir
@@ -490,23 +327,11 @@ def process(opt):
 	sent2_test = tokenize_and_write(tokenizer, opt.sent2_test, tokenizer_output + 'test.sent2.txt')
 	label_test = load(opt.label_test)
 
-	if do_triple:
-		triple1 = tokenize_and_write(tokenizer, opt.triple1, tokenizer_output + 'triple1.txt')
-		triple2 = tokenize_and_write(tokenizer, opt.triple2, tokenizer_output + 'triple2.txt')
-		triple3 = tokenize_and_write(tokenizer, opt.triple3, tokenizer_output + 'triple3.txt')
-		label3 = load(opt.label3)
-
 	print("First pass through data to get vocab...")
 
 	num_train = make_vocab(opt, glove_vocab, word_indexer, all_word_indexer, label_indexer, sent1, sent2, label, opt.max_seq_l, count=True)
 	print("Number of examples in training: {}".format(num_train))
 	print("Number of sentences in training: {0}, number of tokens: {1}/{2}".format(num_train, len(word_indexer.d), len(all_word_indexer.d)))
-
-	num_train_triple = None
-	if do_triple:
-		num_train_triple = make_vocab_triple(opt, glove_vocab, word_indexer, all_word_indexer, label_indexer, triple1, triple2, triple3, label3, opt.max_seq_l, count=True)
-		print("Number of examples in pertubed training: {}".format(num_train_triple))
-		print("Number of sentences in pertubed training: {0}, number of tokens: {1}/{2}".format(num_train_triple, len(word_indexer.d), len(all_word_indexer.d)))
 
 	num_valid = make_vocab(opt, glove_vocab, word_indexer, all_word_indexer, label_indexer, sent1_val, sent2_val, label_val, opt.max_seq_l, count=True)
 	print("Number of examples in valid: {}".format(num_valid))
@@ -524,9 +349,6 @@ def process(opt):
 	convert(opt, tokenizer, word_indexer, all_word_indexer, label_indexer, sent1, sent2, label, opt.output + ".train.hdf5", num_train)
 	convert(opt, tokenizer, word_indexer, all_word_indexer, label_indexer, sent1_val, sent2_val, label_val, opt.output + ".val.hdf5", num_valid)
 	convert(opt, tokenizer, word_indexer, all_word_indexer, label_indexer, sent1_test, sent2_test, label_test, opt.output + ".test.hdf5", num_test)	
-	if do_triple:
-		convert_triple(opt, tokenizer, word_indexer, all_word_indexer, label_indexer, triple1, triple2, triple3, label3, opt.triple_output + ".train.hdf5", num_train_triple)
-
 	
 def main(arguments):
 	parser = argparse.ArgumentParser(
@@ -542,12 +364,8 @@ def main(arguments):
 	parser.add_argument('--sent2_test', help="Path to sent2 test data.",default = "test.raw.sent2.txt")
 	parser.add_argument('--label_test', help="Path to label test data.",default = "test.label.txt")
 	parser.add_argument('--dir', help="Path to the data dir",default = "./data/bert_nli/")
+	parser.add_argument('--bert_type', help="The type of bert encoder from huggingface, eg. roberta-base",default = "roberta-base")
 
-	parser.add_argument('--triple1', help="Path to tripled training data sent1. (optional)", default = "")
-	parser.add_argument('--triple2', help="Path to tripled training data sent1. (optional)", default = "")
-	parser.add_argument('--triple3', help="Path to tripled training data sent1. (optional)", default = "")
-	parser.add_argument('--label3', help="Path to tripled training data label. (optional)", default = "")	
-	
 	parser.add_argument('--batch_size', help="Size of each minibatch.", type=int, default=48)
 	parser.add_argument('--max_seq_l', help="Maximum sequence length. Sequences longer than this are dropped.", type=int, default=400)
 	parser.add_argument('--tokenizer_output', help="Prefix of the tokenized output file names. ", type=str, default = "")
@@ -567,10 +385,6 @@ def main(arguments):
 	opt.label_val = opt.dir + opt.label_val
 	opt.label_test = opt.dir + opt.label_test
 	opt.output = opt.dir + opt.output
-	opt.triple1 = opt.dir + opt.triple1
-	opt.triple2 = opt.dir + opt.triple2
-	opt.triple3 = opt.dir + opt.triple3
-	opt.label3 = opt.dir + opt.label3
 	opt.tokenizer_output = opt.dir + opt.tokenizer_output
 
 	process(opt)

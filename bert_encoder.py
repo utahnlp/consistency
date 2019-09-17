@@ -1,12 +1,12 @@
 import sys
-sys.path.insert(0, '../pytorch-pretrained-BERT')
+sys.path.insert(0, '../pytorch-transformers')
 import torch
 from torch import cuda
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
 from torch import nn
 from torch.autograd import Variable
 from holder import *
 from util import *
+from pytorch_transformers import *
 
 # encoder with Elmo
 class BertEncoder(torch.nn.Module):
@@ -17,12 +17,9 @@ class BertEncoder(torch.nn.Module):
 
 		self.zero = Variable(torch.zeros(1), requires_grad=False)
 		self.zero = to_device(self.zero, self.opt.bert_gpuid)
-
-		if opt.fp16 == 1:
-			self.zero = self.zero.half()
 		
 		print('loading BERT model...')
-		self.bert = BertModel.from_pretrained('bert-base-uncased')
+		self.bert = self._get_bert(self.opt.bert_type)
 
 		print('verifying BERT model...')
 		self.bert.eval()
@@ -42,17 +39,12 @@ class BertEncoder(torch.nn.Module):
 		self.fp16 = opt.fp16 == 1
 
 
-	def get_seg_mask(self):
-		mask = torch.ones(self.shared.batch_l, self.shared.sent_l1+self.shared.sent_l2-1).long()
-		mask = to_device(mask, self.opt.bert_gpuid)
-
-		seg1 = torch.zeros(self.shared.batch_l, self.shared.sent_l1).long()
-		seg2 = torch.ones(self.shared.batch_l, self.shared.sent_l2-1).long()	# removing the heading [CLS]
-		seg = torch.cat([seg1, seg2], 1)
-		seg = to_device(seg, self.opt.bert_gpuid)
-
-		return seg, mask
-
+	def _get_bert(self, key):
+		model_map={"bert-base-uncased": (BertModel, BertTokenizer),
+			"gpt2": (GPT2Model, GPT2Tokenizer),
+			"roberta-base": (RobertaModel, RobertaTokenizer)}
+		model_cls, _ = model_map[key]
+		return model_cls.from_pretrained(key)
 
 
 	def forward(self, sent1, sent2, char_sent1, char_sent2, bert1, bert2):
@@ -60,15 +52,11 @@ class BertEncoder(torch.nn.Module):
 		bert2 = to_device(bert2, self.opt.bert_gpuid)
 		bert_tok = torch.cat([bert1, bert2[:, 1:]], 1)	# removing the heading [CLS]
 
-		seg, mask = self.get_seg_mask()
-
-		assert(seg.shape[1] == bert_tok.shape[1])
-
 		if self.opt.fix_bert == 1:
 			with torch.no_grad():
-				last, pooled = self.bert(bert_tok, seg, mask, output_all_encoded_layers=False)
+				last, pooled = self.bert(bert_tok, None)
 		else:
-			last, pooled = self.bert(bert_tok, seg, mask, output_all_encoded_layers=False)
+			last, pooled = self.bert(bert_tok, None)
 
 		last = last + pooled.unsqueeze(1) * self.zero
 

@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '../pytorch-pretrained-BERT')
+sys.path.insert(0, '../pytorch-transformers')
 import os
 import argparse
 import numpy as np
@@ -9,7 +9,16 @@ from collections import defaultdict
 import json
 import torch
 from torch import cuda
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
+from pytorch_transformers import *
+
+def get_tokenizer(key):
+	model_map={"bert-base-uncased": (BertModel, BertTokenizer),
+		"gpt2": (GPT2Model, GPT2Tokenizer),
+		"roberta-base": (RobertaModel, RobertaTokenizer)}
+	model_cls, tokenizer_cls = model_map[key]
+	print('loading tokenizer: {0}'.format(key))
+	tokenizer = tokenizer_cls.from_pretrained(key)
+	return tokenizer
 
 
 class Indexer:
@@ -476,12 +485,14 @@ def load(path):
 	return all_lines
 
 def process(opt):
+	tokenizer = get_tokenizer(opt.bert_type)
+	
 	do_triple = opt.sent3 != opt.dir
 	if do_triple:
 		print('sent3 detected, will process in triple mode.')
 
-	all_word_indexer = Indexer(symbols = ["<blank>", "[CLS]", "[SEP]"])	# all tokens will be recorded
-	word_indexer = Indexer(symbols = ["<blank>", "[CLS]", "[SEP]"])		# only glove tokens will be recorded
+	all_word_indexer = Indexer(symbols = ["<blank>", tokenizer.cls_token, tokenizer.sep_token])	# all tokens will be recorded
+	word_indexer = Indexer(symbols = ["<blank>", tokenizer.cls_token, tokenizer.sep_token])		# only glove tokens will be recorded
 	load_vocab_to_indexer(opt.vocab, word_indexer)
 	load_vocab_to_indexer(opt.vocab_all, all_word_indexer)
 	glove_vocab = get_glove_words(opt.glove)
@@ -492,9 +503,6 @@ def process(opt):
 		oov_words.append('<oov'+ str(i) + '>')
 	word_indexer.register_all_words(oov_words, count=False)
 	all_word_indexer.register_all_words(oov_words, count=False)
-
-	print('loading BERT tokenizer...')
-	tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
 	#### tokenize
 	sent1 = tokenize_and_write(tokenizer, opt.sent1, opt.tokenizer_output + '.sent1.txt')
@@ -541,12 +549,12 @@ def main(arguments):
 	parser.add_argument('--sent3', help="Path to sent3 extra data.", default = "")
 	parser.add_argument('--label', help="Path to label data (optional)", default = "")
 	parser.add_argument('--dir', help="Path to the data dir",default = "./data/bert_nli/")	
-
+	parser.add_argument('--bert_type', help="The type of bert encoder from huggingface, eg. roberta-base",default = "roberta-base")
 	parser.add_argument('--vocab', help="Path to the glove vocabulary preprocessed", default = "./data/bert_nli/snli.word.dict")
 	parser.add_argument('--vocab_all', help="Path to the all word vocabulary preprocessed", default = "./data/bert_nli/snli.allword.dict")
 	
 	parser.add_argument('--batch_size', help="Size of each minibatch.", type=int, default=32)
-	parser.add_argument('--max_seq_l', help="Maximum sequence length. Sequences longer than this are dropped.", type=int, default=300)
+	parser.add_argument('--max_seq_l', help="Maximum sequence length. Sequences longer than this are dropped.", type=int, default=350)
 	parser.add_argument('--tokenizer_output', help="Prefix of the tokenized output file names. ", type=str, default = "")
 	parser.add_argument('--output', help="Prefix of the output file names. ", type=str, default = "")
 	parser.add_argument('--shuffle', help="If = 1, shuffle sentences before sorting (based on source length).", type = int, default = 1)
