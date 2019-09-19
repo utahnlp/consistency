@@ -6,6 +6,8 @@ This branch accommodates recent updates in huggingface's pytorch transformer hub
 The ```master``` branch is customized for bert-base while this branch works with other typical bertology models in the huggingface hub.
 To use that, start from the prerequisites steps.
 
+To illustrate the process, here we will be using the roberta-base model as an example.
+
 ---
 
 Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framework for Consistency of Neural Models](https://arxiv.org/abs/1909.00126)
