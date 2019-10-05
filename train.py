@@ -337,7 +337,6 @@ def train_epoch(opt, shared, m, optim, data, epoch_id, sub_idx, extra=None, extr
 			# clear up grad
 			m.zero_grad()
 			acc_batch_size = 0
-			shared.num_update += 1
 
 			# stats
 			grad_norm2_avg = grad_norm2
