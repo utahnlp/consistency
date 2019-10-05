@@ -3,7 +3,7 @@
 ---
 ### What is special in this branch?
 This branch accommodates recent fix(es) in our repo and updates in huggingface's pytorch transformer hub and nvidia apex.
-The ```master``` branch is customized for bert-base while this branch works with other typical bertology models in the huggingface hub.
+The ```master``` branch uses bert-base and will stay as-is for exact reproducibility. This branch works with other typical bertology models in the huggingface hub.
 To use that, start from the prerequisites steps.
 
 To illustrate the process, here we will be using the roberta-base model as an example.
