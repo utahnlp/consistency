@@ -61,6 +61,7 @@ class AdamBert:
 		self.opt = opt
 		self.shared = shared
 		self.optim = None
+		self.clip = opt.clip if opt.clip > 0.0  else 10000000000.0
 		self.betas = [float(b) for b in opt.adam_betas.split(',')]
 
 	def build_optimizer(self, m):
