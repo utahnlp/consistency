@@ -12,7 +12,7 @@ Implementation of the NLI model in our EMNLP 2019 paper: [A Logic-Driven Framewo
 
 ---
 ## Headsup
-To include recent fix(es) in this repo and to accommodate recent updates in pytorch/huggingface/apex, try the branch ```huggingface_hub```.\
+To include recent fix(es) in this repo and updates in pytorch/huggingface/apex, try the branch ```post-camera-ready```.\
 For exact reproducibility, stick to this branch.
 
 ---
