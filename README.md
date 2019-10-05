@@ -292,3 +292,5 @@ Please refer to the appendices of our paper for details of hyperparameters. The 
 ## Issues & To-dos
 - [x] Sanity check
 - [ ] Cleanup code on glove and char embeddings
+- [x] Fixed double counting on the ```num_update```
+	- this impacts when computing the learning rate warmup curve.
