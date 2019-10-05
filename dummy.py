@@ -1,8 +1,8 @@
 import sys
-sys.path.insert(0, '../pytorch-transformers')
+sys.path.insert(0, '../transformers')
 import torch
 from torch import cuda
-from pytorch_transformers import *
+from transformers import *
 
 def get_cls(key):
 	model_map={"bert-base-uncased": (BertModel, BertTokenizer),

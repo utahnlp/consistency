@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '../pytorch-transformers')
+sys.path.insert(0, '../transformers')
 import math
 import torch
 from torch import nn
@@ -7,9 +7,9 @@ from holder import *
 from util import *
 from apex import amp
 from bert_adam import *
-from pytorch_transformers.optimization import *
+from transformers.optimization import *
 #from apex.fp16_utils import FP16_Optimizer
-from pytorch_transformers import AdamW, WarmupLinearSchedule
+from transformers import AdamW, WarmupLinearSchedule
 
 class Adagrad:
 	def __init__(self, opt, shared):

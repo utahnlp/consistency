@@ -1,12 +1,12 @@
 import sys
-sys.path.insert(0, '../pytorch-transformers')
+sys.path.insert(0, '../transformers')
 import torch
 from torch import cuda
 from torch import nn
 from torch.autograd import Variable
 from holder import *
 from util import *
-from pytorch_transformers import *
+from transformers import *
 
 # encoder with Elmo
 class BertEncoder(torch.nn.Module):

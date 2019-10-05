@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(0, '../pytorch-transformers')
+sys.path.insert(0, '../transformers')
 import os
 import argparse
 import numpy as np
@@ -9,7 +9,7 @@ from collections import defaultdict
 import json
 import torch
 from torch import cuda
-from pytorch_transformers import *
+from transformers import *
 
 def get_tokenizer(key):
 	model_map={"bert-base-uncased": (BertModel, BertTokenizer),
