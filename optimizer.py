@@ -65,7 +65,7 @@ class AdamBert:
 
 	def build_optimizer(self, m):
 		named_params = [p for n, p in m.named_parameters() if p.requires_grad]
-		self.optim = BertAdam(params, lr=self.opt.learning_rate, max_grad_norm=self.opt.clip, b1=self.betas[0], b2=self.betas[1])
+		self.optim = BertAdam(named_params, lr=self.opt.learning_rate, max_grad_norm=self.opt.clip, b1=self.betas[0], b2=self.betas[1])
 		return m
 
 	def backward(self, m, loss):
