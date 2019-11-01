@@ -210,20 +210,20 @@ def train_epoch(opt, shared, m, optim, data, epoch_id, sub_idx, extra=None, extr
 		shared.data_size = data_size
 
 		if opt.fwd_mode == 'pair':
-			cur_data, cur_idx = all_data[batch_order[i]]
 			# pair mode
+			# use the original data for indexing
 			(data_name, source, target, char_source, char_target, bert1, bert2,
-				batch_ex_idx, batch_l, source_l, target_l, label, res_map) = cur_data[cur_idx]
+				batch_ex_idx, batch_l, source_l, target_l, label, res_map) = data[batch_order[i]]
 
 			y_gold = Variable(label, requires_grad=False)
 			output = forward_pass(m, source, target, char_source, char_target, bert1, bert2,
 				batch_ex_idx, batch_l, source_l, target_l, res_map)
 
 		elif opt.fwd_mode == 'flip':
-			cur_data, cur_idx = all_data[batch_order[i]]
 			# flip mode
+			# use the original data for indexing
 			(data_name, source, target, char_source, char_target, bert1, bert2,
-				batch_ex_idx, batch_l, source_l, target_l, label, res_map) = cur_data[cur_idx]
+				batch_ex_idx, batch_l, source_l, target_l, label, res_map) = data[batch_order[i]]
 
 			y_gold = Variable(label, requires_grad=False)
 			output = forward_pass_flip(m, source, target, char_source, char_target, bert1, bert2,
