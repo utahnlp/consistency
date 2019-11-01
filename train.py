@@ -224,7 +224,7 @@ def train_epoch(opt, shared, m, optim, data, epoch_id, sub_idx, extra=None, extr
 			# flip mode
 			# use the original data for indexing
 			(data_name, source, target, char_source, char_target, bert1, bert2,
-				batch_ex_idx, batch_l, source_l, target_l, label, res_map) = data[cur_idx]
+				batch_ex_idx, batch_l, source_l, target_l, label, res_map) = data[batch_order[i]]
 
 			y_gold = Variable(label, requires_grad=False)
 			output = forward_pass_flip(m, source, target, char_source, char_target, bert1, bert2,
