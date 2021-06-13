@@ -9,7 +9,7 @@ from apex import amp
 from bert_adam import *
 from transformers.optimization import *
 #from apex.fp16_utils import FP16_Optimizer
-from transformers import AdamW, WarmupLinearSchedule
+#from transformers import AdamW, WarmupLinearSchedule
 
 class Adagrad:
 	def __init__(self, opt, shared):
