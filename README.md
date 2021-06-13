@@ -35,7 +35,7 @@ numpy
 spacy 2.0.11 (with en model)
 nvidia apex
 pytorch BERT by huggingface(https://github.com/huggingface/transformers.git)
-	(download and put in ../transformers, not necessarily installed)
+	(download and put in ../transformers, not necessarily installed, preferrably version < 4 due to interface changes.)
 glove.840B.300d.txt (under ./data/)
 	(We don't actually use it, but need it for preprocessing (due to an old design).)
 ```
